@@ -124,7 +124,7 @@ static async realizarSorteoCompleto(sorteoId) {
   }
 
   // Crear sorteo en la base de datos, link_acceso = null
-  const sorteoId = await Sorteo.crear(nombre, fecha, usuarioId, null);
+  const sorteoId = await Sorteo.crearSorteo(nombre, fecha, usuarioId, null);
 
   // Crear participantes
   await Participante.crearVarios(participantes, sorteoId);

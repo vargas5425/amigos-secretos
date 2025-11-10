@@ -34,26 +34,6 @@ const LandingPage = () => {
               </Link>
             </div>
           </div>
-          
-          <div className="hero-image-simple">
-            <div className="mockup-card-simple">
-              <div className="mockup-header-simple">
-                <span>Sorteo Amigos Secretos 2025</span>
-                <span className="status-badge-simple">Activo</span>
-              </div>
-              <div className="mockup-content-simple">
-                <div className="mockup-item-simple">
-                  <span>Participantes:</span>
-                  <span>Min: 2</span>
-                  <span>Max: 10</span>
-                </div>
-                <div className="mockup-item-simple">
-                  <span>Fecha:</span>
-                  <span>17 Noviembre 2025</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

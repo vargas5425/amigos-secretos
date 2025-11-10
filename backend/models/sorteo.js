@@ -1,7 +1,7 @@
 import { getDb } from '../config/db.js';
 
 class Sorteo {
-  static async crear(nombre, fecha, usuarioId, linkAcceso = null) {
+  static async crearSorteo(nombre, fecha, usuarioId, linkAcceso = null) {
     const db = getDb();
     
     return new Promise((resolve, reject) => {

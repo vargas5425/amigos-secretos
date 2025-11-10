@@ -38,55 +38,51 @@ useEffect(() => {
 
 
 const handleChange = (e) => {
-setFormData({
-...formData,
-[e.target.name]: e.target.value
-})
+  setFormData({
+    ...formData,
+    [e.target.name]: e.target.value
+  })
 }
 
 const handleParticipanteChange = (index, value) => {
-const nuevosParticipantes = [...formData.participantes]
-nuevosParticipantes[index] = value
-setFormData({
-...formData,
-participantes: nuevosParticipantes
-})
+    const nuevosParticipantes = [...formData.participantes]
+    nuevosParticipantes[index] = value
+    setFormData({
+      ...formData,
+      participantes: nuevosParticipantes
+  })
 }
 
 const agregarParticipante = () => {
-setFormData({
-...formData,
-participantes: [...formData.participantes, '']
-})
+  setFormData({
+    ...formData,
+    participantes: [...formData.participantes, '']
+  })
 }
 
 const eliminarParticipante = (index) => {
-if (formData.participantes.length > 1) {
-const nuevosParticipantes = formData.participantes.filter((_, i) => i !== index)
-setFormData({
-...formData,
-participantes: nuevosParticipantes
-})
-}
+  if (formData.participantes.length > 1) {
+  const nuevosParticipantes = formData.participantes.filter((_, i) => i !== index)
+    setFormData({
+      ...formData,
+      participantes: nuevosParticipantes
+    })
+  }
 }
 
 const handleSubmit = (e) => {
-e.preventDefault()
+  e.preventDefault()
+  // Filtrar participantes vacíos
+  const participantesFiltrados = formData.participantes.filter(p => p.trim() !== '')
 
-// Filtrar participantes vacíos
-const participantesFiltrados = formData.participantes.filter(p => p.trim() !== '')
-
-if (participantesFiltrados.length < 2) {
-  alert('Debe haber al menos 2 participantes')
-  return
-}
-
-onSubmit({
-  ...formData,
-  participantes: participantesFiltrados
-})
-
-
+  if (participantesFiltrados.length < 2) {
+    alert('Debe haber al menos 2 participantes')
+    return
+  }
+  onSubmit({
+    ...formData,
+    participantes: participantesFiltrados
+  })
 }
 
 return (

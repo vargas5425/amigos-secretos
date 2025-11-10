@@ -1,4 +1,3 @@
-// services/tokenService.js
 import crypto from 'crypto';
 import { getDb } from '../config/db.js';
 
@@ -43,7 +42,6 @@ const validarTokenAcceso = async (token) => {
   });
 };
 
-//evitar que se vuelva a usar
 const marcarTokenComoUsado = async (tokenId) => {
   const db = getDb();
   
@@ -59,7 +57,7 @@ const marcarTokenComoUsado = async (tokenId) => {
   });
 };
 
-//crear token para bolillo personal 
+//crear token personal 
 const crearTokenBolillo = async (participanteId) => {
   const db = getDb();
   const token = generarToken();

@@ -15,7 +15,7 @@ import {
 
 const router = express.Router();
 
-// Rutas públicas con tokens (NO requieren autenticación JWT)
+// Rutas públicas con tokens (NO requieren autenticación)
 router.post('/acceder', accederConToken);
 router.post('/identificar', identificarParticipante);
 router.get('/bolillo/:token', obtenerBolillo);
@@ -30,10 +30,4 @@ router.put('/:id', actualizarSorteo);
 router.delete('/:id', eliminarSorteo);
 router.post('/:id/sortear', realizarSorteo);
 
-// Opcional: puedes mantener tu endpoint de status si lo necesitas
-router.get("/status", (req, res) => {
-  res.json({ ok: true, message: "Sorteo routes reachable" });
-});
-
 export default router;
-console.log("✅ Rutas de sorteo cargadas correctamente");

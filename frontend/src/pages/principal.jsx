@@ -51,7 +51,6 @@ const LandingPage = () => {
                   <span>Fecha:</span>
                   <span>17 Noviembre 2025</span>
                 </div>
-                
               </div>
             </div>
           </div>

@@ -1,14 +1,11 @@
-// services/sorteoService.js
 import Sorteo from '../models/sorteo.js';
 import Participante from '../models/participante.js';
-import { crearTokenAcceso } from './tokenService.js';
+import { crearTokenAcceso,marcarTokenComoUsado } from './tokenService.js';
+import { getDb } from '../config/db.js';
 
 export class SorteoService {
   
-  /**
-   * Genera asignaciones válidas para el amigo secreto
-   * Asegura que nadie se asigne a sí mismo
-   */
+  /*Asegura que nadie se asigne a sí mismo*/
   static generarAsignacionesValidas(participantes) {
     let asignaciones = [];
     let intentos = 0;
@@ -42,50 +39,61 @@ export class SorteoService {
     return asignaciones;
   }
 
-  /**
-   * Realiza el sorteo completo con todas las validaciones
-   */
-  static async realizarSorteoCompleto(sorteoId) {
-    // Verificar estado del sorteo
-    const sorteo = await Sorteo.buscarPorId(sorteoId);
-    if (sorteo.estado !== 'pendiente') {
-      throw new Error('El sorteo ya ha sido realizado');
-    }
-
-    // Obtener participantes
-    const participantes = await Participante.listarPorSorteo(sorteoId);
-
-    // Validar cantidad de participantes
-    if (participantes.length < 2) {
-      throw new Error('Se necesitan al menos 2 participantes para realizar el sorteo');
-    }
-
-    // Generar asignaciones
-    const asignaciones = this.generarAsignacionesValidas(participantes);
-
-    // Aplicar asignaciones en la base de datos
-    for (let i = 0; i < participantes.length; i++) {
-      await Participante.actualizar(participantes[i].id, {
-        asignado_a: asignaciones[i].id
-      });
-    }
-
-    // Actualizar estado del sorteo
-    await Sorteo.cambiarEstado(sorteoId, 'realizado');
-
-    // Generar token de acceso para compartir resultados
-    const tokenAcceso = await crearTokenAcceso(sorteoId);
-
-    return {
-      message: 'Sorteo realizado exitosamente',
-      token_acceso: tokenAcceso,
-      total_participantes: participantes.length
-    };
+  //Realiza el sorteo completo con todas las validaciones
+static async realizarSorteoCompleto(sorteoId) {
+  // Verificar estado del sorteo
+  const sorteo = await Sorteo.buscarPorId(sorteoId);
+  if (sorteo.estado !== 'pendiente') {
+    throw new Error('El sorteo ya ha sido realizado');
   }
 
-  /**
-   * Valida si un sorteo puede ser editado/eliminado
-   */
+  // Obtener participantes
+  const participantes = await Participante.listarPorSorteo(sorteoId);
+  if (participantes.length < 2) {
+    throw new Error('Se necesitan al menos 2 participantes para realizar el sorteo');
+  }
+
+  // Generar asignaciones válidas
+  const asignaciones = this.generarAsignacionesValidas(participantes);
+
+  // Guardar asignaciones en la base de datos
+  for (let i = 0; i < participantes.length; i++) {
+    await Participante.actualizar(participantes[i].id, {
+      asignado_a: asignaciones[i].id
+    });
+  }
+
+  // Actualizar estado del sorteo
+  await Sorteo.cambiarEstado(sorteoId, 'realizado');
+
+  // Marcar cualquier token viejo como usado
+  const db = getDb();
+  await new Promise((resolve, reject) => {
+    db.run(
+      'UPDATE tokens_acceso SET usado = TRUE WHERE sorteo_id = ?',
+      [sorteoId],
+      function(err) {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+
+  // Generar nuevo token de acceso
+  const tokenAcceso = await crearTokenAcceso(sorteoId);
+
+  // Guardar token en el sorteo
+  await Sorteo.actualizar(sorteoId, { link_acceso: tokenAcceso });
+
+  return {
+    message: 'Sorteo realizado exitosamente',
+    token_acceso: tokenAcceso,
+    total_participantes: participantes.length
+  };
+}
+
+
+  // Validar si un sorteo puede ser editado o eliminado
   static async validarSorteoParaEdicion(sorteoId, usuarioId) {
     const esPropietario = await Sorteo.verificarPropiedad(sorteoId, usuarioId);
     if (!esPropietario) {
@@ -99,48 +107,42 @@ export class SorteoService {
 
     return true;
   }
+  /*============================================
+                    CRUD DE SORTEO
+    =============================================*/ 
 
-  /**
-   * Crea un nuevo sorteo con validaciones
-   */
-  static async crearSorteoCompleto(datosSorteo, usuarioId) {
-    const { nombre, fecha, participantes } = datosSorteo;
+  // Crear un nuevo sorteo con validaciones
+    static async crearSorteoCompleto(datosSorteo, usuarioId) {
+  const { nombre, fecha, participantes } = datosSorteo;
 
-    if (!nombre || !fecha || !participantes || !Array.isArray(participantes)) {
-      throw new Error('Datos incompletos o inválidos');
-    }
-
-    if (participantes.length < 2) {
-      throw new Error('Se necesitan al menos 2 participantes');
-    }
-
-    // Crear sorteo en la base de datos
-    const sorteoId = await Sorteo.crear(nombre, fecha, usuarioId);
-
-    // Crear participantes
-    await Participante.crearVarios(participantes, sorteoId);
-
-      // 3️⃣ Generar token de acceso para el sorteo
-    const tokenAcceso = await crearTokenAcceso(sorteoId);
-
-      // 4️⃣ Actualizar el sorteo con el token/link de acceso
-    await Sorteo.actualizar(sorteoId, { link_acceso: tokenAcceso });
-
-    // Obtener el sorteo creado con su link de acceso
-    const sorteoCreado = await Sorteo.buscarPorId(sorteoId);
-
-    return {
-      id: sorteoId,
-      nombre,
-      fecha,
-      link_acceso: sorteoCreado.link_acceso,
-      total_participantes: participantes.length
-    };
+  if (!nombre || !fecha || !participantes || !Array.isArray(participantes)) {
+    throw new Error('Datos incompletos o inválidos');
   }
 
-  /**
-   * Actualiza un sorteo con sus participantes
-   */
+  if (participantes.length < 2) {
+    throw new Error('Se necesitan al menos 2 participantes');
+  }
+
+  // Crear sorteo en la base de datos, link_acceso = null
+  const sorteoId = await Sorteo.crear(nombre, fecha, usuarioId, null);
+
+  // Crear participantes
+  await Participante.crearVarios(participantes, sorteoId);
+
+  // Obtener el sorteo creado
+  const sorteoCreado = await Sorteo.buscarPorId(sorteoId);
+
+  return {
+    id: sorteoId,
+    nombre,
+    fecha,
+    link_acceso: sorteoCreado.link_acceso, // null por ahora
+    total_participantes: participantes.length
+  };
+}
+
+
+  //Actualiza un sorteo con sus participantes
   static async actualizarSorteoCompleto(sorteoId, datosActualizacion, usuarioId) {
     const { nombre, fecha, participantes } = datosActualizacion;
 
@@ -160,9 +162,7 @@ export class SorteoService {
     };
   }
 
-  /**
-   * Elimina un sorteo con todas sus dependencias
-   */
+  //Elimina un sorteo con todas sus dependencias
   static async eliminarSorteoCompleto(sorteoId, usuarioId) {
     // Validar permisos y estado
     await this.validarSorteoParaEdicion(sorteoId, usuarioId);
@@ -175,9 +175,60 @@ export class SorteoService {
     };
   }
 
-  /**
-   * Obtiene los detalles completos de un sorteo
-   */
+static async identificarParticipanteCompleto(tokenData, participanteId) {
+  const { sorteo_id } = tokenData;
+
+  // Buscar participante
+  const participante = await Participante.buscarPorId(participanteId);
+  if (!participante) throw new Error('Participante no encontrado');
+
+  // Marcar como identificado
+  await Participante.marcarComoIdentificado(participanteId);
+
+  // Verificar si todos los participantes ya se identificaron
+  const db = getDb();
+  const row = await new Promise((resolve, reject) => {
+    db.get(
+      `SELECT 
+         (SELECT COUNT(*) FROM participantes WHERE sorteo_id = ?) AS total,
+         (SELECT COUNT(*) FROM participantes WHERE sorteo_id = ? AND identificado = 1) AS identificados`,
+      [sorteo_id, sorteo_id],
+      (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      }
+    );
+  });
+
+  if (row.identificados >= row.total) {
+    // Buscar el token activo real
+    const tokenActivo = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT id FROM tokens_acceso WHERE sorteo_id = ? AND usado = FALSE',
+        [sorteo_id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    if (tokenActivo) {
+      await marcarTokenComoUsado(tokenActivo.id);
+      console.log(`Token ${tokenActivo.id} marcado como usado. Todos los participantes ya se identificaron.`);
+    }
+  }
+
+  // Obtener asignado
+  const asignado = await Participante.obtenerAsignacion(participante.id);
+
+  return {
+    participante: { id: participante.id, nombre: participante.nombre },
+    asignado: { nombre: asignado?.nombre, wishlist: asignado?.wishlist }
+  };
+}
+
+  //Obtiene los detalles completos de un sorteo
   static async obtenerDetallesSorteo(sorteoId, usuarioId) {
     const sorteo = await Sorteo.buscarPorId(sorteoId);
     
@@ -195,37 +246,6 @@ export class SorteoService {
     return {
       ...sorteo,
       participantes
-    };
-  }
-
-  /**
-   * Proceso completo de identificación de participante
-   */
-  static async identificarParticipanteCompleto(tokenAcceso, participanteId) {
-    // La validación del token se hace en el controller
-    // ya que depende del tokenService
-
-    // Verificar que el participante pertenece al sorteo del token
-    const participante = await Participante.buscarPorId(participanteId);
-    if (!participante) {
-      throw new Error('Participante no encontrado');
-    }
-
-    // Marcar como identificado
-    await Participante.marcarComoIdentificado(participanteId);
-
-    // Obtener información del asignado
-    const asignado = await Participante.obtenerAsignacion(participante.id);
-
-    return {
-      participante: {
-        id: participante.id,
-        nombre: participante.nombre
-      },
-      asignado: {
-        nombre: asignado?.nombre,
-        wishlist: asignado?.wishlist
-      }
     };
   }
 }

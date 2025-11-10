@@ -1,24 +1,6 @@
 import { getDb } from '../config/db.js';
 
 class Participante {
-  static async crear(nombre, sorteoId) {
-    const db = getDb();
-    
-    return new Promise((resolve, reject) => {
-      db.run(
-        'INSERT INTO participantes (nombre, sorteo_id) VALUES (?, ?)',
-        [nombre, sorteoId],
-        function(err) {
-          if (err) {
-            reject(err);
-            return;
-          }
-          resolve(this.lastID);
-        }
-      );
-    });
-  }
-
   static async crearVarios(participantes, sorteoId) {
     const db = getDb();
     
@@ -225,27 +207,6 @@ class Participante {
     });
   }
 
-  /*static async buscarPorTokenBolillo(tokenBolillo) {
-    const db = getDb();
-    
-    return new Promise((resolve, reject) => {
-      db.get(
-        `SELECT p.*, s.nombre as sorteo_nombre, s.fecha as sorteo_fecha
-         FROM participantes p 
-         JOIN sorteos s ON p.sorteo_id = s.id
-         WHERE p.token_bolillo = ?`,
-        [tokenBolillo],
-        (err, row) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          resolve(row);
-        }
-      );
-    });
-  }*/
-
   static async obtenerAsignacion(participanteId) {
     const db = getDb();
     
@@ -266,24 +227,6 @@ class Participante {
       );
     });
   }
-
-  /*static async contarPorSorteo(sorteoId) {
-    const db = getDb();
-    
-    return new Promise((resolve, reject) => {
-      db.get(
-        'SELECT COUNT(*) as total FROM participantes WHERE sorteo_id = ?',
-        [sorteoId],
-        (err, row) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          resolve(row.total);
-        }
-      );
-    });
-  }*/
 }
 
 export default Participante;

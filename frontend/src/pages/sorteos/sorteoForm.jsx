@@ -11,9 +11,7 @@ useEffect(() => {
   const cargarDatos = async () => {
     try {
       if (sorteo && sorteo.id) {
-        // Cargar desde el backend (edición)
         const res = await api.get(`/sorteos/${sorteo.id}`)
-        //const datos = res.data
         const datos = res.data.sorteo || res.data
 
         setFormData({
@@ -22,14 +20,12 @@ useEffect(() => {
           participantes: datos.participantes?.map(p => p.nombre) || ['']
         })
       } else if (sorteo && !sorteo.id) {
-        // Nuevo sorteo (pasado directamente)
         setFormData({
           nombre: sorteo.nombre || '',
           fecha: sorteo.fecha ? sorteo.fecha.split('T')[0] : '',
           participantes: sorteo.participantes?.length ? sorteo.participantes : ['']
         })
       } else {
-        // Nuevo sorteo vacío
         setFormData({ nombre: '', fecha: '', participantes: [''] })
       }
     } catch (error) {
@@ -165,8 +161,6 @@ return (
     </div>
   </form>
 </div>
-
-
 )
 }
 

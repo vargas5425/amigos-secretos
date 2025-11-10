@@ -83,7 +83,7 @@ const realizarSorteo = async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    // Verificar propiedad primero (esto podría moverse a middleware)
+    // Verificar propiedad primero
     const esPropietario = await Sorteo.verificarPropiedad(id, req.usuario.id);
     if (!esPropietario) {
       return res.status(404).json({ error: 'Sorteo no encontrado' });
@@ -105,7 +105,7 @@ const accederConToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Token de acceso inválido o ya usado' });
     }
 
-    // Obtener sorteo (sin verificación de usuario para acceso público)
+    // Obtener sorteo
     const sorteo = await Sorteo.buscarPorId(tokenData.sorteo_id);
     
     // Obtener participantes no identificados
@@ -129,15 +129,15 @@ const identificarParticipante = async (req, res, next) => {
   try {
     const { token_acceso, participante_id } = req.body;
 
-    // Validar token de acceso
+    // Validar token de acceso y obtener información completa
     const tokenData = await validarTokenAcceso(token_acceso);
     if (!tokenData) {
       return res.status(401).json({ error: 'Token de acceso inválido' });
     }
 
-    // Procesar identificación
+    // Identificar participante y marcar token como usado si corresponde
     const resultado = await SorteoService.identificarParticipanteCompleto(
-      token_acceso, 
+      tokenData, // <-- PASAMOS EL OBJETO COMPLETO
       participante_id
     );
 
@@ -163,7 +163,7 @@ const obtenerBolillo = async (req, res, next) => {
       return res.status(404).json({ error: 'Token de bolillo inválido' });
     }
 
-    // Obtener información completa del participante y su asignado
+    // Obtener información completa del participante
     const participanteCompleto = await Participante.buscarPorId(participante.id);
     const asignado = await Participante.obtenerAsignacion(participante.id);
 
@@ -195,7 +195,7 @@ const actualizarWishlist = async (req, res, next) => {
 
     await Participante.actualizarWishlist(participante.id, wishlist);
     
-    console.log("🌀 Wishlist actualizada para participante:", participante.id);
+    console.log("Wishlist actualizada para participante:", participante.id);
     res.json({ message: 'Wishlist actualizada exitosamente' });
 
   } catch (error) {

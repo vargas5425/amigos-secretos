@@ -6,7 +6,7 @@ import { api } from '../services/api'
 const BolilloPage = () => {
   const { token } = useParams() // token_acceso o token_bolillo según la URL
   const navigate = useNavigate()
-  const [modo, setModo] = useState('acceso') // 'acceso', 'identificacion', 'bolillo'
+  const [modo, setModo] = useState('acceso')
   const [sorteo, setSorteo] = useState(null)
   const [participantes, setParticipantes] = useState([])
   const [participanteSeleccionado, setParticipanteSeleccionado] = useState('')

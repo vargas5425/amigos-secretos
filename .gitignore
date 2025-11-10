@@ -43,6 +43,7 @@ backend/build/
 backend/*.db
 backend/*.sqlite
 backend/*.sqlite3
+backend/config/amigosecreto.db
 
 # Logs
 backend/logs/

@@ -14,7 +14,7 @@ export class SorteoService {
     while (intentos < maxIntentos) {
       intentos++;
       
-      // Crear una copia aleatoria usando Fisher-Yates shuffle
+      // Crear una copia aleatoria para asignacion
       const copia = [...participantes];
       for (let i = copia.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -49,9 +49,6 @@ static async realizarSorteoCompleto(sorteoId) {
 
   // Obtener participantes
   const participantes = await Participante.listarPorSorteo(sorteoId);
-  if (participantes.length < 2) {
-    throw new Error('Se necesitan al menos 2 participantes para realizar el sorteo');
-  }
 
   // Generar asignaciones válidas
   const asignaciones = this.generarAsignacionesValidas(participantes);
@@ -92,7 +89,6 @@ static async realizarSorteoCompleto(sorteoId) {
   };
 }
 
-
   // Validar si un sorteo puede ser editado o eliminado
   static async validarSorteoParaEdicion(sorteoId, usuarioId) {
     const esPropietario = await Sorteo.verificarPropiedad(sorteoId, usuarioId);
@@ -119,10 +115,6 @@ static async realizarSorteoCompleto(sorteoId) {
     throw new Error('Datos incompletos o inválidos');
   }
 
-  if (participantes.length < 2) {
-    throw new Error('Se necesitan al menos 2 participantes');
-  }
-
   // Crear sorteo en la base de datos, link_acceso = null
   const sorteoId = await Sorteo.crearSorteo(nombre, fecha, usuarioId, null);
 
@@ -136,11 +128,9 @@ static async realizarSorteoCompleto(sorteoId) {
     id: sorteoId,
     nombre,
     fecha,
-    link_acceso: sorteoCreado.link_acceso, // null por ahora
     total_participantes: participantes.length
   };
 }
-
 
   //Actualiza un sorteo con sus participantes
   static async actualizarSorteoCompleto(sorteoId, datosActualizacion, usuarioId) {
@@ -157,7 +147,6 @@ static async realizarSorteoCompleto(sorteoId) {
     await Participante.crearVarios(participantes, sorteoId);
 
     return {
-      message: 'Sorteo actualizado exitosamente',
       total_participantes: participantes.length
     };
   }

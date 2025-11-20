@@ -10,21 +10,16 @@ participantes: ['']
 useEffect(() => {
   const cargarDatos = async () => {
     try {
+      //actualizar
       if (sorteo && sorteo.id) {
         const res = await api.get(`/sorteos/${sorteo.id}`)
         const datos = res.data.sorteo || res.data
-
         setFormData({
           nombre: datos.nombre || '',
           fecha: datos.fecha ? datos.fecha.split('T')[0] : '',
           participantes: datos.participantes?.map(p => p.nombre) || ['']
         })
-      } else if (sorteo && !sorteo.id) {
-        setFormData({
-          nombre: sorteo.nombre || '',
-          fecha: sorteo.fecha ? sorteo.fecha.split('T')[0] : '',
-          participantes: sorteo.participantes?.length ? sorteo.participantes : ['']
-        })
+        //vacio antes de crear
       } else {
         setFormData({ nombre: '', fecha: '', participantes: [''] })
       }
@@ -35,7 +30,6 @@ useEffect(() => {
 
   cargarDatos()
 }, [sorteo])
-
 
 const handleChange = (e) => {
   setFormData({
